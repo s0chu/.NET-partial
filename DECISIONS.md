@@ -52,7 +52,7 @@ POST /api/rooms/{roomId}/bookings -> ExceptionMiddleware -> BookingsEndpoints.Ma
 ## 5. What you rejected from what the AI gave you
 Give a concrete example of code or an idea proposed by the AI that you corrected or rejected, and say why.
 
-_(your answer here)_
+Nothing. I accepted everything as it was. As far as I have read it was good
 
 ## 6. If you had 30 more minutes
 What would you improve and what risk did you leave in the project?
