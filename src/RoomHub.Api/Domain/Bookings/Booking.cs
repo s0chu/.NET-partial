@@ -23,6 +23,9 @@ public sealed class Booking
     public static Result<Booking> Create(
         Room room, string? bookedBy, DateTime startUtc, DateTime endUtc, int attendees, DateTime nowUtc)
     {
+        startUtc = ToUtc(startUtc);
+        endUtc = ToUtc(endUtc);
+
         // R2
         if (string.IsNullOrWhiteSpace(bookedBy))
             return BookingErrors.InvalidBookedBy;
@@ -58,5 +61,29 @@ public sealed class Booking
         };
     }
 
-    public void Cancel() => Status = BookingStatus.Cancelled;
+    // R7: intervals are half-open, so bookings that only touch do not overlap,
+    // and a cancelled booking never blocks anything.
+    public bool OverlapsWith(Booking other) =>
+        Status == BookingStatus.Active &&
+        other.Status == BookingStatus.Active &&
+        StartUtc < other.EndUtc &&
+        other.StartUtc < EndUtc;
+
+    // R8
+    public Result<Unit> Cancel()
+    {
+        if (Status == BookingStatus.Cancelled)
+            return BookingErrors.AlreadyCancelled;
+
+        Status = BookingStatus.Cancelled;
+        return Unit.Value;
+    }
+
+    // The contract says dates are UTC: a value without an offset is taken as UTC, one with an offset is converted.
+    private static DateTime ToUtc(DateTime value) => value.Kind switch
+    {
+        DateTimeKind.Utc => value,
+        DateTimeKind.Local => value.ToUniversalTime(),
+        _ => DateTime.SpecifyKind(value, DateTimeKind.Utc)
+    };
 }

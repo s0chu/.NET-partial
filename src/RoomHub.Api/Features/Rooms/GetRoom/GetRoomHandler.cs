@@ -1,13 +1,12 @@
 using RoomHub.Api.Common.Cqrs;
 using RoomHub.Api.Domain.Common;
 using RoomHub.Api.Domain.Rooms;
-using RoomHub.Api.Infrastructure;
 
 namespace RoomHub.Api.Features.Rooms.GetRoom;
 
 public sealed record GetRoomQuery(Guid RoomId) : IQuery<GetRoomResponse>;
 
-public sealed class GetRoomHandler(RoomRepository rooms)
+public sealed class GetRoomHandler(IRoomRepository rooms)
     : IQueryHandler<GetRoomQuery, GetRoomResponse>
 {
     public async Task<Result<GetRoomResponse>> Handle(GetRoomQuery query, CancellationToken cancellationToken)

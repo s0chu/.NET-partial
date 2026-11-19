@@ -2,7 +2,6 @@ using RoomHub.Api.Common.Cqrs;
 using RoomHub.Api.Domain.Bookings;
 using RoomHub.Api.Domain.Common;
 using RoomHub.Api.Domain.Rooms;
-using RoomHub.Api.Infrastructure;
 
 namespace RoomHub.Api.Features.Bookings.CreateBooking;
 
@@ -10,7 +9,8 @@ public sealed record CreateBookingCommand(
     Guid RoomId, string? BookedBy, DateTime StartUtc, DateTime EndUtc, int Attendees)
     : ICommand<CreateBookingResponse>;
 
-public sealed class CreateBookingHandler(RoomRepository rooms, BookingRepository bookings, TimeProvider time)
+public sealed class CreateBookingHandler(
+    IRoomRepository rooms, IBookingRepository bookings, IUnitOfWork unitOfWork, TimeProvider time)
     : ICommandHandler<CreateBookingCommand, CreateBookingResponse>
 {
     public async Task<Result<CreateBookingResponse>> Handle(
@@ -28,13 +28,13 @@ public sealed class CreateBookingHandler(RoomRepository rooms, BookingRepository
             return result.Error;
 
         var booking = result.Value;
-        foreach (var existing in await bookings.ListForRoomAsync(room.Id, cancellationToken))
-        {
-            if (existing.StartUtc <= booking.EndUtc && booking.StartUtc <= existing.EndUtc)
-                return BookingErrors.RoomOccupied;
-        }
+        var active = await bookings.GetActiveForRoomAsync(room.Id, cancellationToken);
+        if (active.Any(booking.OverlapsWith))
+            return BookingErrors.RoomOccupied;
 
         bookings.Add(booking);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+
         return new CreateBookingResponse(booking.Id, booking.RoomId, booking.Status);
     }
 }

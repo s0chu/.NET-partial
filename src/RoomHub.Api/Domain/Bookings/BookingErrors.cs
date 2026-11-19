@@ -25,6 +25,9 @@ public static class BookingErrors
     public static readonly Error RoomOccupied =
         Error.Conflict("RoomOccupied", "The room is occupied in this interval.");
 
+    public static readonly Error AlreadyCancelled =
+        Error.Conflict("BookingAlreadyCancelled", "The booking is already cancelled.");
+
     public static readonly Error NotFound =
         Error.NotFound("BookingNotFound", "The booking does not exist.");
 }

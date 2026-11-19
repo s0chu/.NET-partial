@@ -1,13 +1,12 @@
 using RoomHub.Api.Common.Cqrs;
 using RoomHub.Api.Domain.Bookings;
 using RoomHub.Api.Domain.Common;
-using RoomHub.Api.Infrastructure;
 
 namespace RoomHub.Api.Features.Bookings.GetBooking;
 
 public sealed record GetBookingQuery(Guid BookingId) : IQuery<GetBookingResponse>;
 
-public sealed class GetBookingHandler(BookingRepository bookings)
+public sealed class GetBookingHandler(IBookingRepository bookings)
     : IQueryHandler<GetBookingQuery, GetBookingResponse>
 {
     public async Task<Result<GetBookingResponse>> Handle(GetBookingQuery query, CancellationToken cancellationToken)
