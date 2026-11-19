@@ -1,10 +1,4 @@
-namespace RoomHub.Api.Models;
-
-public enum BookingStatus
-{
-    Active,
-    Cancelled
-}
+namespace RoomHub.Api.Domain.Bookings;
 
 public class Booking
 {

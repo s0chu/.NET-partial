@@ -53,3 +53,116 @@ Content-Type: application/json
 POST {{baseUrl}}/api/bookings/{{bookingId}}/cancel
 
 ### 8. Add your own requests here for the rules in ASSIGNMENT.md
+# Every error below must come back as application/problem+json.
+
+### 8.1 R1: empty room name (expected: 400)
+POST {{baseUrl}}/api/rooms
+Content-Type: application/json
+
+{
+  "name": "",
+  "capacity": 10
+}
+
+### 8.2 R1: whitespace room name (expected: 400)
+POST {{baseUrl}}/api/rooms
+Content-Type: application/json
+
+{
+  "name": "   ",
+  "capacity": 10
+}
+
+### 8.3 R1: zero capacity (expected: 400)
+POST {{baseUrl}}/api/rooms
+Content-Type: application/json
+
+{
+  "name": "Study room 2",
+  "capacity": 0
+}
+
+### 8.4 R1: negative capacity (expected: 400)
+POST {{baseUrl}}/api/rooms
+Content-Type: application/json
+
+{
+  "name": "Study room 2",
+  "capacity": -5
+}
+
+### 8.5 R2: missing bookedBy (expected: 400)
+POST {{baseUrl}}/api/rooms/{{roomId}}/bookings
+Content-Type: application/json
+
+{
+  "startUtc": "2030-01-11T10:00:00Z",
+  "endUtc": "2030-01-11T11:00:00Z",
+  "attendees": 4
+}
+
+### 8.6 R2: blank bookedBy (expected: 400)
+POST {{baseUrl}}/api/rooms/{{roomId}}/bookings
+Content-Type: application/json
+
+{
+  "bookedBy": "   ",
+  "startUtc": "2030-01-11T10:00:00Z",
+  "endUtc": "2030-01-11T11:00:00Z",
+  "attendees": 4
+}
+
+### 8.7 R3: end equal to start (expected: 400)
+POST {{baseUrl}}/api/rooms/{{roomId}}/bookings
+Content-Type: application/json
+
+{
+  "bookedBy": "ana",
+  "startUtc": "2030-01-11T10:00:00Z",
+  "endUtc": "2030-01-11T10:00:00Z",
+  "attendees": 4
+}
+
+### 8.8 R3: end before start (expected: 400)
+POST {{baseUrl}}/api/rooms/{{roomId}}/bookings
+Content-Type: application/json
+
+{
+  "bookedBy": "ana",
+  "startUtc": "2030-01-11T11:00:00Z",
+  "endUtc": "2030-01-11T10:00:00Z",
+  "attendees": 4
+}
+
+### 8.9 R4: zero attendees (expected: 400)
+POST {{baseUrl}}/api/rooms/{{roomId}}/bookings
+Content-Type: application/json
+
+{
+  "bookedBy": "ana",
+  "startUtc": "2030-01-11T10:00:00Z",
+  "endUtc": "2030-01-11T11:00:00Z",
+  "attendees": 0
+}
+
+### 8.10 R4: attendees over the room capacity of 10 (expected: 400)
+POST {{baseUrl}}/api/rooms/{{roomId}}/bookings
+Content-Type: application/json
+
+{
+  "bookedBy": "ana",
+  "startUtc": "2030-01-11T10:00:00Z",
+  "endUtc": "2030-01-11T11:00:00Z",
+  "attendees": 11
+}
+
+### 8.11 Missing room with an invalid body (expected: 404, before any validation)
+POST {{baseUrl}}/api/rooms/00000000-0000-0000-0000-000000000001/bookings
+Content-Type: application/json
+
+{
+  "bookedBy": "",
+  "startUtc": "2030-01-11T11:00:00Z",
+  "endUtc": "2030-01-11T10:00:00Z",
+  "attendees": 0
+}

@@ -1,11 +1,12 @@
-using RoomHub.Api.Models;
-using RoomHub.Api.Repositories;
+using RoomHub.Api.Common;
+using RoomHub.Api.Domain.Bookings;
+using RoomHub.Api.Infrastructure;
 
-namespace RoomHub.Api.Services;
+namespace RoomHub.Api.Features.Bookings.CreateBooking;
 
-public class BookingService(RoomRepository rooms, BookingRepository bookings)
+public sealed class CreateBookingHandler(RoomRepository rooms, BookingRepository bookings)
 {
-    public Booking Create(Guid roomId, string? bookedBy, DateTime startUtc, DateTime endUtc, int attendees)
+    public Booking Handle(Guid roomId, string? bookedBy, DateTime startUtc, DateTime endUtc, int attendees)
     {
         var room = rooms.Get(roomId);
         if (room is null)
@@ -42,20 +43,5 @@ public class BookingService(RoomRepository rooms, BookingRepository bookings)
 
         bookings.Add(booking);
         return booking;
-    }
-
-    public Booking Get(Guid id)
-    {
-        var booking = bookings.Get(id);
-        if (booking is null)
-            throw new BusinessException("BookingNotFound", "The booking does not exist.", 404);
-
-        return booking;
-    }
-
-    public void Cancel(Guid id)
-    {
-        var booking = Get(id);
-        booking.Status = BookingStatus.Cancelled;
     }
 }

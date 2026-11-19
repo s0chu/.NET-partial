@@ -1,6 +1,4 @@
-using RoomHub.Api.Services;
-
-namespace RoomHub.Api.Middleware;
+namespace RoomHub.Api.Common;
 
 public sealed class ExceptionMiddleware(RequestDelegate next)
 {

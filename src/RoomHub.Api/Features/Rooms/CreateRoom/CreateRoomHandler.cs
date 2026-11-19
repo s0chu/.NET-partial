@@ -1,11 +1,12 @@
-using RoomHub.Api.Models;
-using RoomHub.Api.Repositories;
+using RoomHub.Api.Common;
+using RoomHub.Api.Domain.Rooms;
+using RoomHub.Api.Infrastructure;
 
-namespace RoomHub.Api.Services;
+namespace RoomHub.Api.Features.Rooms.CreateRoom;
 
-public class RoomService(RoomRepository rooms)
+public sealed class CreateRoomHandler(RoomRepository rooms)
 {
-    public Room Create(string? name, int capacity)
+    public Room Handle(string? name, int capacity)
     {
         if (string.IsNullOrWhiteSpace(name))
             throw new BusinessException("InvalidName", "Room name is required.", 400);
@@ -21,15 +22,6 @@ public class RoomService(RoomRepository rooms)
         };
 
         rooms.Add(room);
-        return room;
-    }
-
-    public Room Get(Guid id)
-    {
-        var room = rooms.Get(id);
-        if (room is null)
-            throw new BusinessException("RoomNotFound", "The room does not exist.", 404);
-
         return room;
     }
 }
