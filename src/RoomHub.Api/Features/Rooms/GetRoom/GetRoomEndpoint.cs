@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Http.HttpResults;
+using RoomHub.Api.Common;
+using RoomHub.Api.Common.Cqrs;
 
 namespace RoomHub.Api.Features.Rooms.GetRoom;
 
@@ -10,9 +12,15 @@ public static class GetRoomEndpoint
         group.MapGet("/{id:guid}", Handle)
             .WithName("GetRoom");
 
-    private static Ok<GetRoomResponse> Handle(Guid id, GetRoomHandler handler)
+    private static async Task<Results<Ok<GetRoomResponse>, ProblemHttpResult>> Handle(
+        Guid id,
+        IQueryHandler<GetRoomQuery, GetRoomResponse> handler,
+        CancellationToken cancellationToken)
     {
-        var room = handler.Handle(id);
-        return TypedResults.Ok(new GetRoomResponse(room.Id, room.Name, room.Capacity));
+        var result = await handler.Handle(new GetRoomQuery(id), cancellationToken);
+        if (result.IsFailure)
+            return result.Error.ToProblem();
+
+        return TypedResults.Ok(result.Value);
     }
 }

@@ -16,11 +16,11 @@ public class RoomRepository
         }
     }
 
-    public Room? Get(Guid id)
+    public Task<Room?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         lock (_lock)
         {
-            return _rooms.FirstOrDefault(r => r.Id == id);
+            return Task.FromResult(_rooms.FirstOrDefault(r => r.Id == id));
         }
     }
 }

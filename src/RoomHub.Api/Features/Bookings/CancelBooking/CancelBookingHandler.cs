@@ -1,17 +1,22 @@
-using RoomHub.Api.Common;
+using RoomHub.Api.Common.Cqrs;
 using RoomHub.Api.Domain.Bookings;
+using RoomHub.Api.Domain.Common;
 using RoomHub.Api.Infrastructure;
 
 namespace RoomHub.Api.Features.Bookings.CancelBooking;
 
-public sealed class CancelBookingHandler(BookingRepository bookings)
-{
-    public void Handle(Guid id)
-    {
-        var booking = bookings.Get(id);
-        if (booking is null)
-            throw new BusinessException("BookingNotFound", "The booking does not exist.", 404);
+public sealed record CancelBookingCommand(Guid BookingId) : ICommand<Unit>;
 
-        booking.Status = BookingStatus.Cancelled;
+public sealed class CancelBookingHandler(BookingRepository bookings)
+    : ICommandHandler<CancelBookingCommand, Unit>
+{
+    public async Task<Result<Unit>> Handle(CancelBookingCommand command, CancellationToken cancellationToken)
+    {
+        var booking = await bookings.GetByIdAsync(command.BookingId, cancellationToken);
+        if (booking is null)
+            return BookingErrors.NotFound;
+
+        booking.Cancel();
+        return Unit.Value;
     }
 }

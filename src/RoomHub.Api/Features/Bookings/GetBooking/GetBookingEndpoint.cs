@@ -1,4 +1,7 @@
 using Microsoft.AspNetCore.Http.HttpResults;
+using RoomHub.Api.Common;
+using RoomHub.Api.Common.Cqrs;
+using RoomHub.Api.Domain.Bookings;
 
 namespace RoomHub.Api.Features.Bookings.GetBooking;
 
@@ -9,7 +12,7 @@ public sealed record GetBookingResponse(
     DateTime StartUtc,
     DateTime EndUtc,
     int Attendees,
-    string Status);
+    BookingStatus Status);
 
 public static class GetBookingEndpoint
 {
@@ -17,10 +20,15 @@ public static class GetBookingEndpoint
         group.MapGet("/{id:guid}", Handle)
             .WithName("GetBooking");
 
-    private static Ok<GetBookingResponse> Handle(Guid id, GetBookingHandler handler)
+    private static async Task<Results<Ok<GetBookingResponse>, ProblemHttpResult>> Handle(
+        Guid id,
+        IQueryHandler<GetBookingQuery, GetBookingResponse> handler,
+        CancellationToken cancellationToken)
     {
-        var b = handler.Handle(id);
-        return TypedResults.Ok(new GetBookingResponse(
-            b.Id, b.RoomId, b.BookedBy, b.StartUtc, b.EndUtc, b.Attendees, b.Status.ToString()));
+        var result = await handler.Handle(new GetBookingQuery(id), cancellationToken);
+        if (result.IsFailure)
+            return result.Error.ToProblem();
+
+        return TypedResults.Ok(result.Value);
     }
 }

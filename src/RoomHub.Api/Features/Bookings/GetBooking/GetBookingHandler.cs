@@ -1,17 +1,21 @@
-using RoomHub.Api.Common;
+using RoomHub.Api.Common.Cqrs;
 using RoomHub.Api.Domain.Bookings;
+using RoomHub.Api.Domain.Common;
 using RoomHub.Api.Infrastructure;
 
 namespace RoomHub.Api.Features.Bookings.GetBooking;
 
-public sealed class GetBookingHandler(BookingRepository bookings)
-{
-    public Booking Handle(Guid id)
-    {
-        var booking = bookings.Get(id);
-        if (booking is null)
-            throw new BusinessException("BookingNotFound", "The booking does not exist.", 404);
+public sealed record GetBookingQuery(Guid BookingId) : IQuery<GetBookingResponse>;
 
-        return booking;
+public sealed class GetBookingHandler(BookingRepository bookings)
+    : IQueryHandler<GetBookingQuery, GetBookingResponse>
+{
+    public async Task<Result<GetBookingResponse>> Handle(GetBookingQuery query, CancellationToken cancellationToken)
+    {
+        var b = await bookings.GetByIdAsync(query.BookingId, cancellationToken);
+        if (b is null)
+            return BookingErrors.NotFound;
+
+        return new GetBookingResponse(b.Id, b.RoomId, b.BookedBy, b.StartUtc, b.EndUtc, b.Attendees, b.Status);
     }
 }

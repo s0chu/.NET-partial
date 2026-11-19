@@ -16,19 +16,19 @@ public class BookingRepository
         }
     }
 
-    public Booking? Get(Guid id)
+    public Task<Booking?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         lock (_lock)
         {
-            return _bookings.FirstOrDefault(b => b.Id == id);
+            return Task.FromResult(_bookings.FirstOrDefault(b => b.Id == id));
         }
     }
 
-    public List<Booking> ListForRoom(Guid roomId)
+    public Task<List<Booking>> ListForRoomAsync(Guid roomId, CancellationToken cancellationToken = default)
     {
         lock (_lock)
         {
-            return _bookings.Where(b => b.RoomId == roomId).ToList();
+            return Task.FromResult(_bookings.Where(b => b.RoomId == roomId).ToList());
         }
     }
 }
