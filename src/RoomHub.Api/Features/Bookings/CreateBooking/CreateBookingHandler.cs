@@ -32,6 +32,11 @@ public sealed class CreateBookingHandler(
         if (active.Any(booking.OverlapsWith))
             return BookingErrors.RoomOccupied;
 
+        var sameDay = await bookings.GetActiveForParticipantOnDayAsync(
+            booking.BookedBy, booking.StartUtc, cancellationToken);
+        if (booking.WouldExceedDailyLimit(sameDay))
+            return BookingErrors.DailyLimitReached;
+
         bookings.Add(booking);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 

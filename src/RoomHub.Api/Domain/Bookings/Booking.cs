@@ -6,6 +6,10 @@ namespace RoomHub.Api.Domain.Bookings;
 public sealed class Booking
 {
     private static readonly TimeSpan MaxDuration = TimeSpan.FromHours(4);
+    private static readonly TimeSpan MaxDurationLargeRoom = TimeSpan.FromHours(2);
+    private const int LargeRoomCapacity = 10;
+    private const int MaxActivePerDay = 2;
+    private static readonly TimeSpan MinNoticeToCancel = TimeSpan.FromMinutes(60);
 
     private Booking()
     {
@@ -45,9 +49,11 @@ public sealed class Booking
         if (startUtc < nowUtc)
             return BookingErrors.StartInPast;
 
-        // R6: exactly MaxDuration is allowed.
-        if (endUtc - startUtc > MaxDuration)
-            return BookingErrors.TooLong;
+        // R6 + R10: rooms with more than LargeRoomCapacity seats have the shorter limit;
+        // exactly the limit is allowed. The room size decides, not the number of attendees.
+        var isLargeRoom = room.Capacity > LargeRoomCapacity;
+        if (endUtc - startUtc > (isLargeRoom ? MaxDurationLargeRoom : MaxDuration))
+            return isLargeRoom ? BookingErrors.TooLongForLargeRoom : BookingErrors.TooLong;
 
         return new Booking
         {
@@ -69,11 +75,24 @@ public sealed class Booking
         StartUtc < other.EndUtc &&
         other.StartUtc < EndUtc;
 
-    // R8
-    public Result<Unit> Cancel()
+    // R9: one participant (the same BookedBy, compared exactly) can hold at most MaxActivePerDay
+    // active bookings per day across all rooms. The day is the UTC date of StartUtc.
+    public bool WouldExceedDailyLimit(IEnumerable<Booking> others) =>
+        others.Count(other =>
+            other.Id != Id &&
+            other.Status == BookingStatus.Active &&
+            other.BookedBy == BookedBy &&
+            other.StartUtc.Date == StartUtc.Date) >= MaxActivePerDay;
+
+    // R8 + R11: nowUtc comes from the caller's TimeProvider.
+    public Result<Unit> Cancel(DateTime nowUtc)
     {
         if (Status == BookingStatus.Cancelled)
             return BookingErrors.AlreadyCancelled;
+
+        // R11: exactly MinNoticeToCancel before the start is still allowed.
+        if (StartUtc - nowUtc < MinNoticeToCancel)
+            return BookingErrors.TooLateToCancel;
 
         Status = BookingStatus.Cancelled;
         return Unit.Value;
